@@ -187,7 +187,6 @@ var Breakout = {
 
 		this . html ( "gamestats_lives", this . lives ) ;
 		this . html ( "gamestats_score", this . score ) ;
-		this . html ( "gamestats_score", this . score ) ;
 		this . html ( "gamestats_level", this . level ) ;
 
 	},
