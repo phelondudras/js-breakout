@@ -1,5 +1,5 @@
 # js-breakout
-JS-Breakout is a JavaScript based Brakeout clone.
+JS-Breakout is a JavaScript based Breakout clone.
 
 originally developed by Sylvain Saurel via YouTube https://www.youtube.com/watch?v=14Vx2lxuWlI&t=206s
 
