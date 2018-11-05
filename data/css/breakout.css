@@ -1,0 +1,238 @@
+/*!
+  * JS-Breakout v1.0.1 (https://phelondudras.de/)
+  * Copyright 2018 Phelon Dudras (https://github.com/phelondudras/js-breakout)
+  * Licensed under GNU GENERAL PUBLIC LICENSE 3
+  */
+
+html, * { margin:0;padding:0; }
+
+body { background-color:#333333;font-family:"Arial","Helvetica","sans-serif"; }
+
+.gameversion { position:fixed;right:0;bottom:0;z-index:999;color:#FFFFFF;padding:5px; }
+.gameversion span { padding-left:10px; }
+
+.canvas {
+
+	border : 1px solid #000000;
+	margin : 0 auto;
+	width : 800px;
+	display : block;
+	margin-top : 50px;
+	background-color : #FFFFFF;
+	cursor : none;
+
+}
+
+.gameintro {
+
+	position:fixed;
+	top:0;
+	left:0;
+	right:0;
+	bottom:0;
+	width:100%;
+	height:100%;
+	background-image:url("../img/intro.png");
+	z-index:90;
+
+}
+
+.gameintro_inn {
+
+	position:fixed;
+	top:calc(50% - 16pt);
+	left:0;
+	right:0;
+	bottom:0;
+	width:100%;
+	height:100%;
+	color:#333333;
+	text-align:center;
+	vertical-align:middle;
+	line-height:100%;
+	font-size:32pt;
+	z-index:91;
+
+}
+
+.gameover {
+
+	position:fixed;
+	top:0;
+	left:0;
+	right:0;
+	bottom:0;
+	width:100%;
+	height:100%;
+	background-color:#FF6347;
+	z-index:98;
+
+}
+
+.gameover_inn {
+
+	position:fixed;
+	top:calc(50% - 16pt);
+	left:0;
+	right:0;
+	bottom:0;
+	width:100%;
+	height:100%;
+	color:#333333;
+	text-align:center;
+	vertical-align:middle;
+	line-height:100%;
+	font-size:32pt;
+	z-index:99;
+
+}
+
+.gamepause {
+
+	position:fixed;
+	top:0;
+	left:0;
+	right:0;
+	bottom:0;
+	width:100%;
+	height:100%;
+	z-index:96;
+
+}
+
+.gamepause_inn {
+
+	position:fixed;
+	top:calc(50% - 16pt);
+	left:0;
+	right:0;
+	bottom:0;
+	width:100%;
+	height:100%;
+	color:#333333;
+	text-align:center;
+	vertical-align:middle;
+	line-height:100%;
+	font-size:32pt;
+	font-weight:bold;
+	z-index:97;
+
+}
+
+.gamewon {
+
+	position:fixed;
+	top:0;
+	left:0;
+	right:0;
+	bottom:0;
+	width:100%;
+	height:100%;
+	background-color:#0066ff;
+	z-index:94;
+
+}
+
+.gamewon_inn {
+
+	position:fixed;
+	top:calc(50% - 16pt);
+	left:0;
+	right:0;
+	bottom:0;
+	width:100%;
+	height:100%;
+	color:#ffff00;
+	text-align:center;
+	vertical-align:middle;
+	line-height:100%;
+	font-size:32pt;
+	z-index:95;
+
+}
+
+.button {
+
+	background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #ffffff), color-stop(1, #c9d4d6));
+	background:-moz-linear-gradient(top, #ffffff 5%, #c9d4d6 100%);
+	background:-webkit-linear-gradient(top, #ffffff 5%, #c9d4d6 100%);
+	background:-o-linear-gradient(top, #ffffff 5%, #c9d4d6 100%);
+	background:-ms-linear-gradient(top, #ffffff 5%, #c9d4d6 100%);
+	background:linear-gradient(to bottom, #ffffff 5%, #c9d4d6 100%);
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#c9d4d6',GradientType=0);
+	background-color:#ffffff;
+	-moz-border-radius:8px;
+	-webkit-border-radius:8px;
+	border-radius:8px;
+	border:1px solid #ffaa00;
+	display:inline-block;
+	cursor:pointer;
+	color:#828282;
+	font-family:Arial;
+	font-size:18px;
+	font-weight:bold;
+	padding:10px 32px;
+	text-decoration:none;
+
+}
+
+.button:hover {
+
+	background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #c9d4d6), color-stop(1, #ffffff));
+	background:-moz-linear-gradient(top, #c9d4d6 5%, #ffffff 100%);
+	background:-webkit-linear-gradient(top, #c9d4d6 5%, #ffffff 100%);
+	background:-o-linear-gradient(top, #c9d4d6 5%, #ffffff 100%);
+	background:-ms-linear-gradient(top, #c9d4d6 5%, #ffffff 100%);
+	background:linear-gradient(to bottom, #c9d4d6 5%, #ffffff 100%);
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#c9d4d6', endColorstr='#ffffff',GradientType=0);
+	background-color:#c9d4d6;
+
+}
+
+.button:active {
+
+	position:relative;
+	top:1px;
+
+}
+
+.gamestats { list-style:none;display:block;width:100%; }
+.gamestats_li { float:left;width:25%;display:block;font-size:24pt;color:#111111;font-weight:bold;min-width:250px;text-align:center; }
+
+.gamestats_li {
+
+  text-shadow: 1px 1px 0 #DDDDDD,
+    -1px 1px 0 #DDDDDD,
+    1px -1px 0 #DDDDDD,
+    -1px -1px 0 #DDDDDD,
+    0px 1px 0 #DDDDDD,
+    0px -1px 0 #DDDDDD,
+    -1px 0px 0 #DDDDDD,
+    1px 0px 0 #DDDDDD,
+    2px 2px 0 #DDDDDD,
+    -2px 2px 0 #DDDDDD,
+    2px -2px 0 #DDDDDD,
+    -2px -2px 0 #DDDDDD,
+    0px 2px 0 #DDDDDD,
+    0px -2px 0 #DDDDDD,
+    -2px 0px 0 #DDDDDD,
+    2px 0px 0 #DDDDDD,
+    1px 2px 0 #DDDDDD,
+    -1px 2px 0 #DDDDDD,
+    1px -2px 0 #DDDDDD,
+    -1px -2px 0 #DDDDDD,
+    2px 1px 0 #DDDDDD,
+    -2px 1px 0 #DDDDDD,
+    2px -1px 0 #DDDDDD,
+    -2px -1px 0 #DDDDDD
+
+}
+
+.clear { clear:both; }
+
+.gamemeta { color:#66FFFF;text-align:center;font-family:"Courier New", Courier, monospace; }
+
+.gamemusicbtn { position:fixed;top:0;right:0;padding:10px 10px 0 0; }
+
+.gamemusicbtn button { width:64px;height:64px;border:none;background:transparent url("../img/music.png");cursor:pointer;opacity:0.5;outline:none; }
+.gamemusicbtn button:hover { opacity:1; }

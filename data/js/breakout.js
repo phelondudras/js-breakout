@@ -1,16 +1,38 @@
 /*!
-  * JS-Breakout v1.0.0 (https://phelondudras.de/)
+  * JS-Breakout v1.0.1 (https://phelondudras.de/)
   * Copyright 2018 Phelon Dudras (https://github.com/phelondudras/js-breakout)
   * Licensed under GNU GENERAL PUBLIC LICENSE 3
+  * 
+  * Implementations:
+  * 	bombs, expansion, empty spots, cheats
+  * CheatCodes: ( Breakout.enableCheats=true; )
+  * 	e = expand
+  * 	l = increase live
+  * 	s = increase score
+  * 	x = win level
+  * 	numpad+ = increase speed
+  * 	numpad- = decrease speed
+  * 
   */
 
 var Breakout = {
 
+	version : "1.0.1",
 	thread : null,
 	element : null,
 	hiScore : 0,
 	root : null,
 	musicObj : null,
+	failSndObj : null,
+	wonSndObj : null,
+	expandSndObj : null,
+	showBombs : true,
+	showMeta : false,
+	soundEffects : true,
+	enableCheats : false,
+	expansion : null,
+	expansionTime : 10,
+	expansionCount : 0,
 	levels : [
 
 		{
@@ -19,10 +41,14 @@ var Breakout = {
 			brickCol  : 0,
 			speedX : 0,
 			speedY : 0,
-			bgColor : '#FFFFFF',
-			brickColor : '#FFFFFF',
-			pongColor : '#000000',
-			ballColor : '#FF6347'
+			bgColor : "#FFFFFF",
+			brickColor : "#FFFFFF",
+			pongColor : "#000000",
+			ballColor : "#FF6347",
+			emptySpot : [],
+			bombs : 0,
+			bombColor : "#FF0000",
+			expansions : 0
 
 		},
 
@@ -32,10 +58,14 @@ var Breakout = {
 			brickCol  : 9,
 			speedX : 3,
 			speedY : -3,
-			bgColor : '#FFFFFF',
-			brickColor : '#999999',
-			pongColor : '#000000',
-			ballColor : '#FF6347'
+			bgColor : "#FFFFFF",
+			brickColor : "#999999",
+			pongColor : "#000000",
+			ballColor : "#FF6347",
+			emptySpot : [ "r1c1", "r1c7" ],
+			bombs : 5,
+			bombColor : "#FF0000",
+			expansions : 2
 
 		},
 
@@ -45,10 +75,14 @@ var Breakout = {
 			brickCol  : 9,
 			speedX : 4,
 			speedY : -4,
-			bgColor : '#CCffCC',
-			brickColor : '#009933',
-			pongColor : '#000000',
-			ballColor : '#FF6347'
+			bgColor : "#CCffCC",
+			brickColor : "#009933",
+			pongColor : "#000000",
+			ballColor : "#FF6347",
+			emptySpot : [ "r1c1", "r1c7", "r2c1", "r2c7", "r0c0", "r0c8", "r3c0", "r3c8" ],
+			bombs : 4,
+			bombColor : "#FF0000",
+			expansions : 2
 
 		},
 
@@ -58,10 +92,14 @@ var Breakout = {
 			brickCol  : 9,
 			speedX : 5,
 			speedY : -5,
-			bgColor : '#FFFFCC',
-			brickColor : '#FF9900',
-			pongColor : '#000000',
-			ballColor : '#FF6347'
+			bgColor : "#FFFFCC",
+			brickColor : "#FF9900",
+			pongColor : "#000000",
+			ballColor : "#FF6347",
+			emptySpot : [ "r0c0", "r0c8", "r4c0", "r4c8" ],
+			bombs : 3,
+			bombColor : "#FF0000",
+			expansions : 2
 
 		},
 
@@ -71,10 +109,14 @@ var Breakout = {
 			brickCol  : 9,
 			speedX : 6,
 			speedY : -6,
-			bgColor : '#FFCC99',
-			brickColor : '#CC0066',
-			pongColor : '#000000',
-			ballColor : '#FF6347'
+			bgColor : "#FFCC99",
+			brickColor : "#CC0066",
+			pongColor : "#000000",
+			ballColor : "#FF6347",
+			emptySpot : [ "r0c0", "r0c8", "r5c0", "r5c8", "r2c0", "r2c8", "r3c0", "r3c8" ],
+			bombs : 2,
+			bombColor : "#FF0000",
+			expansions : 1
 
 		},
 
@@ -84,10 +126,14 @@ var Breakout = {
 			brickCol  : 9,
 			speedX : 7,
 			speedY : -7,
-			bgColor : '#CCCCFF',
-			brickColor : '#3366CC',
-			pongColor : '#000000',
-			ballColor : '#FF6347'
+			bgColor : "#CCCCFF",
+			brickColor : "#3366CC",
+			pongColor : "#000000",
+			ballColor : "#FF6347",
+			emptySpot : [ "r0c4", "r1c4", "r2c4", "r3c4", "r4c4", "r5c4", "r6c4", "r2c0", "r3c0", "r4c0", "r2c8", "r3c8", "r4c8" ],
+			bombs : 1,
+			bombColor : "#FF0000",
+			expansions : 1
 
 		},
 
@@ -97,10 +143,14 @@ var Breakout = {
 			brickCol  : 9,
 			speedX : 8,
 			speedY : -8,
-			bgColor : '#FF9999',
-			brickColor : '#800000',
-			pongColor : '#000000',
-			ballColor : '#FF6347'
+			bgColor : "#FF9999",
+			brickColor : "#800000",
+			pongColor : "#000000",
+			ballColor : "#FF6347",
+			emptySpot : [ "r0c0", "r0c8", "r1c0", "r1c8", "r6c0", "r6c8", "r7c0", "r7c8", "r0c4", "r7c4" ],
+			bombs : 0,
+			bombColor : "#FF0000",
+			expansions : 1
 
 		}
 
@@ -112,6 +162,8 @@ var Breakout = {
 		this . element = ele ;
 
 		this . stopMusic () ;
+		this . stopGameOver () ;
+		this . stopGameWon () ;
 		this . setProperties () ;
 		this . setListeners () ;
 		this . hideLayers () ;
@@ -152,9 +204,9 @@ var Breakout = {
 		this . brickPadding    = 10 ;
 		this . brickOffsetTop  = 30 ;
 		this . brickOffsetLeft = 30 ;
-		this . brickColor      = '#999999' ;
-		this . pongColor       = '#000000' ;
-		this . ballColor       = '#FF6347' ;
+		this . brickColor      = "#999999" ;
+		this . pongColor       = "#000000" ;
+		this . ballColor       = "#FF6347" ;
 		this . RIGHT_ARROW     = 0 ;
 		this . LEFT_ARROW      = 0 ;
 		this . scoreRate       = 100 ;
@@ -163,7 +215,7 @@ var Breakout = {
 		this . level           = 1 ;
 		this . pause           = false ;
 		this . running         = true ;
-		this . showMeta        = false ;
+		this . bombPlace       = [] ; // to prevent infinity loops while tracing bomb waves
 
 	},
 
@@ -195,6 +247,7 @@ var Breakout = {
 
 		this . bricks = [] ;
 
+		var sta, idx ;
 		var obj = this . levels [ lvl ] ;
 
 		this . brickRows = obj . brickRows ;
@@ -203,7 +256,7 @@ var Breakout = {
 		this . pongColor = obj . pongColor ;
 		this . ballColor = obj . ballColor ;
 		this . dx = obj . speedX ;
-		this . dy = obj . speedX ;
+		this . dy = obj . speedY ;
 
 		document . getElementById ( this . element ) . style . backgroundColor = obj . bgColor ;
 
@@ -211,11 +264,19 @@ var Breakout = {
 
 			for ( r = 0; r < this . brickRows; r ++ ) {
 
+				idx = "r" + r + "c" + c ;
+				sta = ( ( obj . emptySpot . indexOf ( idx ) !== -1 ) ? 0 : 1 ) ;
+
 				this . bricks . push ( {
 
-					x      : ( c * ( Breakout . brickW + Breakout . brickPadding ) ) + Breakout . brickOffsetLeft,
-					y      : ( r * ( Breakout . brickH + Breakout . brickPadding ) ) + Breakout . brickOffsetTop,
-					status : 1
+					x         : ( c * ( Breakout . brickW + Breakout . brickPadding ) ) + Breakout . brickOffsetLeft,
+					y         : ( r * ( Breakout . brickH + Breakout . brickPadding ) ) + Breakout . brickOffsetTop,
+					r         : r,
+					c         : c,
+					id        : idx,
+					status    : sta,
+					isBomb    : false,
+					isExpand  : false
 
 				} ) ;
 
@@ -223,7 +284,97 @@ var Breakout = {
 
 		}
 
+		this . calculateBombs ( obj, 0 ) ;
+		this . calculateExpansions ( obj, 0 ) ;
 		this . resetBall () ;
+
+	},
+
+	calculateBombs : function ( obj, loop ) {
+
+		if ( obj . bombs > 0 ) {
+
+			var i, brk, cnt = 0, all = obj . brickCol * obj . brickRows ;
+			var rnd = Math . floor ( Math . random () * all ) ;
+
+			if ( rnd in this . bricks ) {
+
+				var sta = this . bricks [ rnd ] . status ;
+				var bom = this . bricks [ rnd ] . isBomb ;
+
+				if ( sta && ! bom ) {
+
+					this . bricks [ rnd ] . isBomb = true ;
+
+				}
+
+			}
+
+			for ( i in this . bricks ) {
+
+				brk = this . bricks [ i ] ;
+
+				if ( brk . isBomb ) {
+
+					cnt ++ ;
+
+				}
+
+			}
+
+			if ( cnt < obj . bombs && loop < 25 ) {
+
+				loop ++ ;
+
+				this . calculateBombs ( obj, loop ) ;
+
+			}
+
+		}
+
+	},
+
+	calculateExpansions : function ( obj, loop ) {
+
+		if ( obj . expansions > 0 ) {
+
+			var i, brk, cnt = 0, all = obj . brickCol * obj . brickRows ;
+			var rnd = Math . floor ( Math . random () * all ) ;
+
+			if ( rnd in this . bricks ) {
+
+				var sta = this . bricks [ rnd ] . status ;
+				var ext = this . bricks [ rnd ] . isExpand ;
+
+				if ( sta && ! ext ) {
+
+					this . bricks [ rnd ] . isExpand = true ;
+
+				}
+
+			}
+
+			for ( i in this . bricks ) {
+
+				brk = this . bricks [ i ] ;
+
+				if ( brk . isExpand ) {
+
+					cnt ++ ;
+
+				}
+
+			}
+
+			if ( cnt < obj . expansions && loop < 25 ) {
+
+				loop ++ ;
+
+				this . calculateExpansions ( obj, loop ) ;
+
+			}
+
+		}
 
 	},
 
@@ -311,9 +462,11 @@ var Breakout = {
 
 			check = false ;
 
+			var obj = Breakout . levels [ Breakout . level ] ;
+
 			Breakout . ctx . beginPath () ;
 			Breakout . ctx . rect ( brick . x, brick . y, Breakout . brickW, Breakout . brickH ) ;
-			Breakout . ctx . fillStyle = Breakout . brickColor  ;
+			Breakout . ctx . fillStyle = ( ( Breakout . showBombs && brick . isBomb ) ? obj . bombColor : Breakout . brickColor )  ;
 			Breakout . ctx . fill () ;
 			Breakout . ctx . closePath () ;
 
@@ -369,11 +522,118 @@ var Breakout = {
 					Breakout . scoreUp () ;
 					Breakout . playHit () ;
 
+					if ( b . isBomb ) {
+
+						Breakout . playBomb () ;
+						Breakout . bombWave ( b . r, b . c ) ;
+
+						Breakout . bombPlace = [] ;
+
+					}
+
+					if ( b . isExpand ) {
+
+						Breakout . expand () ;
+
+					}
+
 				}
 
 			}
 
 		) ;
+
+	},
+
+	bombWave : function ( r, c ) {
+
+		var i, j, brk, top, rgt, bot, lft ;
+
+		for ( i in Breakout . bricks ) {
+
+			brk = Breakout . bricks [ i ] ;
+
+			if ( Breakout . bombPlace . indexOf ( brk . id ) === -1 && brk . status > 0 ) {
+
+				top = ( brk . r === ( r - 1 ) && brk . c === c ) ;
+				rgt = ( brk . c === ( c + 1 ) && brk . r === r ) ;
+				bot = ( brk . r === ( r + 1 ) && brk . c === c ) ;
+				lft = ( brk . c === ( c - 1 ) && brk . r === r ) ;
+
+				if ( top || rgt || bot || lft ) {
+
+					Breakout . bombPlace . push ( brk . id ) ;
+					Breakout . scoreUp () ;
+
+					brk . status = 0 ;
+
+					if ( brk . isBomb ) {
+
+						Breakout . playBomb () ;
+						Breakout . bombWave ( brk . r, brk . c ) ;
+
+					}
+
+					if ( brk . isExpand ) {
+
+						Breakout . expand () ;
+
+					}
+
+				}
+
+			}
+
+		}
+
+	},
+
+	expand : function () {
+
+		if ( ! Breakout . expansion ) {
+
+			Breakout . expansionCount = 0 ;
+			Breakout . pongW = ( Breakout . pongW * 2 ) ;
+
+			Breakout . playExpansion () ;
+			Breakout . expansion = setInterval ( Breakout . expandExe, 1000 ) ;
+
+		}
+
+	},
+
+	expandExe : function () {
+
+		if ( Breakout . pause ) {
+
+			if ( Breakout . expandSndObj ) {
+
+				Breakout . expandSndObj . pause () ;
+
+			}
+
+		}	else {
+
+			if ( Breakout . expandSndObj ) {
+
+				Breakout . expandSndObj . play () ;
+
+			}
+
+			Breakout . expansionCount ++ ;
+
+			if ( Breakout . expansionCount > Breakout . expansionTime ) {
+
+				clearInterval ( Breakout . expansion ) ;
+
+				Breakout . expansion = null ;
+				Breakout . pongW = ( Breakout . pongW / 2 ) ;
+
+				Breakout . stopExpansion () ;
+
+			}
+
+		}
 
 	},
 
@@ -429,6 +689,7 @@ var Breakout = {
 	keyDown : function ( e ) {
 
 		Breakout . pauseGame ( e ) ;
+		Breakout . processCheats ( e ) ;
 		Breakout . rightKey = Breakout . rightPressed ( e ) ;
 		Breakout . leftKey = Breakout . leftPressed ( e ) ;
 
@@ -503,6 +764,16 @@ var Breakout = {
 
 	},
 
+	clearLevel : function () {
+
+		for ( var i in Breakout . bricks ) {
+
+			Breakout . bricks [ i ] . status = 0 ;
+
+		}
+
+	},
+
 	writeMeta : function () {
 
 		var ele = "gamemeta", con = "" ;
@@ -527,82 +798,175 @@ var Breakout = {
 
 	playHit : function () {
 
-		var pth = this . pathAudio ( "hit.wav" ) ;
-		var snd = new Audio ( pth ) ;
+		if ( this . soundEffects ) {
 
-		snd . loop = false ;
-		snd . play () ;
+			var pth = this . pathAudio ( "hit.wav" ) ;
+			var snd = new Audio ( pth ) ;
+
+			snd . loop = false ;
+			snd . play () ;
+
+		}
 
 	},
 
 	playPong : function () {
 
-		var pth = this . pathAudio ( "pong.wav" ) ;
-		var snd = new Audio ( pth ) ;
+		if ( this . soundEffects ) {
 
-		snd . loop = false ;
-		snd . play () ;
+			var pth = this . pathAudio ( "pong.wav" ) ;
+			var snd = new Audio ( pth ) ;
+
+			snd . loop = false ;
+			snd . play () ;
+
+		}
 
 	},
 
 	playWall : function () {
 
-		var pth = this . pathAudio ( "wall.wav" ) ;
-		var snd = new Audio ( pth ) ;
+		if ( this . soundEffects ) {
 
-		snd . loop = false ;
-		snd . play () ;
+			var pth = this . pathAudio ( "wall.wav" ) ;
+			var snd = new Audio ( pth ) ;
+
+			snd . loop = false ;
+			snd . play () ;
+
+		}
 
 	},
 
 	playLevelUp : function () {
 
-		var pth = this . pathAudio ( "levelup.wav" ) ;
-		var snd = new Audio ( pth ) ;
+		if ( this . soundEffects ) {
 
-		snd . loop = false ;
-		snd . play () ;
+			var pth = this . pathAudio ( "levelup.wav" ) ;
+			var snd = new Audio ( pth ) ;
+
+			snd . loop = false ;
+			snd . play () ;
+
+		}
 
 	},
 
 	playFail : function () {
 
-		var pth = this . pathAudio ( "fail.wav" ) ;
-		var snd = new Audio ( pth ) ;
+		if ( this . soundEffects ) {
 
-		snd . loop = false ;
-		snd . play () ;
+			var pth = this . pathAudio ( "fail.wav" ) ;
+			var snd = new Audio ( pth ) ;
+
+			snd . loop = false ;
+			snd . play () ;
+
+		}
 
 	},
 
 	playGameOver : function () {
 
-		var pth = this . pathAudio ( "gameover.wav" ) ;
-		var snd = new Audio ( pth ) ;
+		if ( this . soundEffects ) {
 
-		snd . loop = false ;
-		snd . play () ;
+			var pth = this . pathAudio ( "gameover.wav" ) ;
+
+			this . failSndObj = new Audio ( pth ) ;
+
+			this . failSndObj . loop = false ;
+			this . failSndObj . play () ;
+
+		}
 
 	},
 
 	playGameWon : function () {
 
-		var pth = this . pathAudio ( "gamewon.wav" ) ;
-		var snd = new Audio ( pth ) ;
+		if ( this . soundEffects ) {
 
-		snd . loop = false ;
-		snd . play () ;
+			var pth = this . pathAudio ( "gamewon.wav" ) ;
+
+			this . wonSndObj = new Audio ( pth ) ;
+
+			this . wonSndObj . loop = false ;
+			this . wonSndObj . play () ;
+
+		}
+
+	},
+
+	playBomb : function () {
+
+		if ( this . soundEffects ) {
+
+			var pth = this . pathAudio ( "bomb.wav" ) ;
+			var snd = new Audio ( pth ) ;
+
+			snd . loop = false ;
+			snd . play () ;
+
+		}
+
+	},
+
+	playExpansion : function () {
+
+		if ( this . soundEffects ) {
+
+			var pt1 = this . pathAudio ( "expand.wav" ) ;
+			var pt2 = this . pathAudio ( "expand_loop.wav" ) ;
+			var snd = new Audio ( pt1 ) ;
+
+			snd . loop = false ;
+			snd . play () ;
+
+			var iVal = setInterval (
+
+				function () {
+
+					Breakout . stopExpansion () ;
+
+					Breakout . expandSndObj = new Audio ( pt2 ) ;
+					Breakout . expandSndObj . loop = true ;
+					Breakout . expandSndObj . play () ;
+
+					clearInterval ( iVal ) ;
+
+					iVal = null ;
+
+				}, 1500
+
+			) ;
+
+		}
 
 	},
 
 	playMusic : function ( root ) {
 
-		var pth = ( ( root ) ? root : "" ) + "data/sound/music.wav" ;
+		if ( this . musicObj ) {
 
-		this . musicObj = new Audio ( pth ) ;
+			if ( this . musicObj . paused ) {
 
-		this . musicObj . loop = true ;
-		this . musicObj . play () ;
+				this . musicObj . play () ;
+
+			}	else {
+
+				this . musicObj . pause () ;
+
+			}
+
+		}	else {
+
+			var pth = ( ( root ) ? root : "" ) + "data/sound/music.wav" ;
+
+			this . musicObj = new Audio ( pth ) ;
+
+			this . musicObj . loop = true ;
+			this . musicObj . play () ;
+
+		}
 
 	},
 
@@ -612,6 +976,106 @@ var Breakout = {
 
 			this . musicObj . pause () ;
 			this . musicObj . currentTime = 0 ;
+
+		}
+
+	},
+
+	stopGameOver : function () {
+
+		if ( this . failSndObj ) {
+
+			this . failSndObj . pause () ;
+			this . failSndObj . currentTime = 0 ;
+
+		}
+
+	},
+
+	stopGameWon : function () {
+
+		if ( this . wonSndObj ) {
+
+			this . wonSndObj . pause () ;
+			this . wonSndObj . currentTime = 0 ;
+
+		}
+
+	},
+
+	stopExpansion : function () {
+
+		if ( Breakout . expandSndObj ) {
+
+			Breakout . expandSndObj . pause () ;
+			Breakout . expandSndObj . currentTime = 0 ;
+
+		}
+
+	},
+
+	setVersion : function ( ele ) {
+
+		this . html ( ele, this . version ) ;
+
+	},
+
+	processCheats : function ( e ) {
+
+		if ( Breakout . enableCheats ) {
+
+			var cod = e. keyCode ;
+
+			switch ( cod ) {
+
+				case 69 :
+
+					if ( ! Breakout . pause ) {
+
+						Breakout . expand () ;
+
+					}
+
+					break ;
+
+				case 76 :
+
+					Breakout . liveUp () ;
+					break ;
+
+				case 83 :
+
+					Breakout . scoreUp () ;
+					break ;
+
+				case 88 :
+
+					if ( ! Breakout . pause ) {
+
+						Breakout . clearLevel () ;
+
+					}
+
+					break ;
+
+				case 107 :
+
+					( ( Breakout . dx > 0 ) ? Breakout . dx ++ : Breakout . dx -- ) ;
+					( ( Breakout . dy > 0 ) ? Breakout . dy ++ : Breakout . dy -- ) ;
+					break ;
+
+				case 109 :
+
+					( ( Breakout . dx > 1 ) ? Breakout . dx -- : Breakout . dx ++ ) ;
+					( ( Breakout . dy > 1 ) ? Breakout . dy -- : Breakout . dy ++ ) ;
+					break ;
+
+				default :
+
+					//
+					break ;
+
+			}
 
 		}
 
